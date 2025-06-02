@@ -1,39 +1,31 @@
-#################################################################
-#                       render.yaml                            #
-#                                                               #
-#  Этот файл лежит в корне репозитория и описывает все сервисы  #
-#  вашего проекта в формате Blueprint от Render.com.            #
-#################################################################
-
-# 1) Секция services: перечисление всех НЕ-PostgreSQL сервисов
 services:
 
   ##########################################################
   # 1. Redis (Managed KeyValue)                             #
   ##########################################################
-  - type: redis               # либо type: keyvalue               :contentReference[oaicite:5]{index=5}
+  - type: redis
     name: redis-cache
-    plan: free                # Бесплатный план для KeyValue-сервиса
+    plan: free
 
   ##########################################################
   # 2. Auth Service (Python)                                #
   ##########################################################
-  - type: web                  # Заменяем web_service → web      :contentReference[oaicite:6]{index=6}
+  - type: web
     name: auth-service
     dockerfilePath: ./auth_service/Dockerfile
     plan: free
     env:
       - key: REDIS_URL
-        value: redis://redis-cache:6379/0           # Используем имя redis-cache, созданное выше 
+        value: redis://redis-cache:6379/0
       - key: AUTH_DATABASE_URI
-        value: sqlite:///auth.db                    # Обратите внимание: sqlite.db хранится в контейнере  
+        value: sqlite:///auth.db
       - key: JWT_SECRET_KEY
         value: some_really_secure_key_32_chars
 
   ##########################################################
   # 3. User Service (Python)                                #
   ##########################################################
-  - type: web                  # Заменяем web_service → web      :contentReference[oaicite:7]{index=7}
+  - type: web
     name: user-service
     dockerfilePath: ./user_service/Dockerfile
     plan: free
@@ -41,8 +33,7 @@ services:
       - key: REDIS_URL
         value: redis://redis-cache:6379/0
       - key: USER_DATABASE_URI
-        value: sqlite:///user.db                    # SQLite-файл создаётся в контейнере
-
+        value: sqlite:///user.db
     dependsOn:
       - auth-service
       - redis-cache
@@ -50,7 +41,7 @@ services:
   ##########################################################
   # 4. Certificate Service (Python)                         #
   ##########################################################
-  - type: web                  # Заменяем web_service → web      :contentReference[oaicite:8]{index=8}
+  - type: web
     name: certificate-service
     dockerfilePath: ./certificate_service/Dockerfile
     plan: free
@@ -58,10 +49,9 @@ services:
       - key: REDIS_URL
         value: redis://redis-cache:6379/0
       - key: CERT_DATABASE_URI
-        value: sqlite:///certs.db                   # SQLite-файл хранится в контейнере
+        value: sqlite:///certs.db
       - key: JWT_SECRET_KEY
         value: some_really_secure_key_32_chars
-
     dependsOn:
       - auth-service
       - user-service
@@ -70,10 +60,9 @@ services:
   ##########################################################
   # 5. Notification Worker (Celery + Python)                #
   ##########################################################
-  - type: worker               # Заменяем background_worker → worker :contentReference[oaicite:9]{index=9}
+  - type: worker
     name: notification-worker
     dockerfilePath: ./notification_service/Dockerfile
-    # План не указывается: worker наследует план того web-сервиса, который его запустил
     env:
       - key: SMTP_HOST
         value: smtp.gmail.com
@@ -95,10 +84,7 @@ services:
         value: redis://redis-cache:6379/0
       - key: SMS_RU_API_KEY
         value: E4533D59-5983-8CAB-B496-279F04274AAF
-
-    # Команда запуска: одновременно Flask + Celery worker
     exec: sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
-
     dependsOn:
       - certificate-service
       - user-service
@@ -107,14 +93,10 @@ services:
   ##########################################################
   # 6. Frontend Service (например, Node.js / Static)        #
   ##########################################################
-  - type: web                  # Заменяем web_service → web      :contentReference[oaicite:10]{index=10}
+  - type: web
     name: frontend
     dockerfilePath: ./frontend/Dockerfile
     plan: free
-    # Если фронтенду нужны ENV-vars, перечислите их здесь:
-    # env:
-    #   - key: API_BASE_URL
-    #     value: http://auth-service.onrender.com
     dependsOn:
       - auth-service
       - user-service
