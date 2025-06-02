@@ -81,7 +81,7 @@ services:
       USER_SERVICE_URL:     http://user-service.onrender.com
       JWT_SECRET_KEY:       some_really_secure_key_32_chars
       CELERY_BROKER_URL:    redis://redis-cache:6379/0
-      CELERY_RESULT_BACKEND:redis://redis-cache:6379/0
+      CELERY_RESULT_BACKEND: redis://redis-cache:6379/0
       SMS_RU_API_KEY:       E4533D59-5983-8CAB-B496-279F04274AAF
     dependsOn:
       - certificate-service
