@@ -1,102 +1,101 @@
+# render.yaml
+# ----------------------------------------------------------------------------
+# Здесь перечислены все сервисы вашего проекта (Redis, auth, user, certificate,
+# notification-worker и frontend) в формате Blueprint Render.com.
+# ----------------------------------------------------------------------------
+
 services:
 
-  ##########################################################
-  # 1. Redis (Managed KeyValue)                             #
-  ##########################################################
-  - type: redis
+  #######################################################
+  # 1) Redis (Managed KeyValue)                        #
+  #######################################################
+  - type: redis               # можно также писать type: keyvalue
     name: redis-cache
-    plan: free
+    plan: free                # использование бесплатного Redis-инстанса
 
-  ##########################################################
-  # 2. Auth Service (Python)                                #
-  ##########################################################
-  - type: web
+  #######################################################
+  # 2) Auth Service (Python)                            #
+  #######################################################
+  - type: web                 # вместо web_service → web
     name: auth-service
     dockerfilePath: ./auth_service/Dockerfile
     plan: free
+    startCommand: python app.py
     env:
-      - key: REDIS_URL
-        value: redis://redis-cache:6379/0
-      - key: AUTH_DATABASE_URI
-        value: sqlite:///auth.db
-      - key: JWT_SECRET_KEY
-        value: some_really_secure_key_32_chars
+      REDIS_URL:            redis://redis-cache:6379/0
+      AUTH_DATABASE_URI:    sqlite:///auth.db
+      JWT_SECRET_KEY:       some_really_secure_key_32_chars
+    # -------------------------------
+    # При желании можно добавить dependsOn,
+    # чтобы Render запускал auth-service
+    # уже после Redis:
+    # dependsOn:
+    #   - redis-cache
 
-  ##########################################################
-  # 3. User Service (Python)                                #
-  ##########################################################
-  - type: web
+  #######################################################
+  # 3) User Service (Python)                            #
+  #######################################################
+  - type: web                 # вместо web_service → web
     name: user-service
     dockerfilePath: ./user_service/Dockerfile
     plan: free
+    startCommand: python app.py
     env:
-      - key: REDIS_URL
-        value: redis://redis-cache:6379/0
-      - key: USER_DATABASE_URI
-        value: sqlite:///user.db
+      REDIS_URL:            redis://redis-cache:6379/0
+      USER_DATABASE_URI:    sqlite:///user.db
     dependsOn:
-      - auth-service
-      - redis-cache
+      - auth-service         # запускать после auth-service
+      - redis-cache          # и после Redis
 
-  ##########################################################
-  # 4. Certificate Service (Python)                         #
-  ##########################################################
-  - type: web
+  #######################################################
+  # 4) Certificate Service (Python)                     #
+  #######################################################
+  - type: web                 # вместо web_service → web
     name: certificate-service
     dockerfilePath: ./certificate_service/Dockerfile
     plan: free
+    startCommand: python app.py
     env:
-      - key: REDIS_URL
-        value: redis://redis-cache:6379/0
-      - key: CERT_DATABASE_URI
-        value: sqlite:///certs.db
-      - key: JWT_SECRET_KEY
-        value: some_really_secure_key_32_chars
+      REDIS_URL:            redis://redis-cache:6379/0
+      CERT_DATABASE_URI:    sqlite:///certs.db
+      JWT_SECRET_KEY:       some_really_secure_key_32_chars
     dependsOn:
       - auth-service
       - user-service
       - redis-cache
 
-  ##########################################################
-  # 5. Notification Worker (Celery + Python)                #
-  ##########################################################
-  - type: worker
+  #######################################################
+  # 5) Notification Worker (Celery + Python)            #
+  #######################################################
+  - type: worker              # вместо background_worker → worker
     name: notification-worker
     dockerfilePath: ./notification_service/Dockerfile
+    startCommand: >           # вместо exec: используем startCommand:
+      sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
     env:
-      - key: SMTP_HOST
-        value: smtp.gmail.com
-      - key: SMTP_PORT
-        value: "587"
-      - key: SMTP_USER
-        value: sypyx1@gmail.com
-      - key: SMTP_PASS
-        value: paad slgb prer aoac
-      - key: CERT_SERVICE_URL
-        value: http://certificate-service.onrender.com
-      - key: USER_SERVICE_URL
-        value: http://user-service.onrender.com
-      - key: JWT_SECRET_KEY
-        value: some_really_secure_key_32_chars
-      - key: CELERY_BROKER_URL
-        value: redis://redis-cache:6379/0
-      - key: CELERY_RESULT_BACKEND
-        value: redis://redis-cache:6379/0
-      - key: SMS_RU_API_KEY
-        value: E4533D59-5983-8CAB-B496-279F04274AAF
-    exec: sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
+      SMTP_HOST:            smtp.gmail.com
+      SMTP_PORT:            "587"
+      SMTP_USER:            sypyx1@gmail.com
+      SMTP_PASS:            paad slgb prer aoac
+      CERT_SERVICE_URL:     http://certificate-service.onrender.com
+      USER_SERVICE_URL:     http://user-service.onrender.com
+      JWT_SECRET_KEY:       some_really_secure_key_32_chars
+      CELERY_BROKER_URL:    redis://redis-cache:6379/0
+      CELERY_RESULT_BACKEND:redis://redis-cache:6379/0
+      SMS_RU_API_KEY:       E4533D59-5983-8CAB-B496-279F04274AAF
     dependsOn:
       - certificate-service
       - user-service
       - redis-cache
 
-  ##########################################################
-  # 6. Frontend Service (например, Node.js / Static)        #
-  ##########################################################
-  - type: web
+  #######################################################
+  # 6) Frontend Service (Node.js / Static)              #
+  #######################################################
+  - type: web                 # вместо web_service → web
     name: frontend
     dockerfilePath: ./frontend/Dockerfile
     plan: free
+    startCommand: npm start
     dependsOn:
       - auth-service
       - user-service
