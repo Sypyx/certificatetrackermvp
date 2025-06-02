@@ -1,64 +1,64 @@
 # render.yaml
-# ----------------------------------------------------------------------------
-# Здесь перечислены все сервисы вашего проекта (Redis, auth, user, certificate,
-# notification-worker и frontend) в формате Blueprint Render.com.
-# ----------------------------------------------------------------------------
 
 services:
 
   #######################################################
   # 1) Redis (Managed KeyValue)                        #
   #######################################################
-  - type: redis               # можно также писать type: keyvalue
+  - type: redis
     name: redis-cache
-    plan: free                # использование бесплатного Redis-инстанса
+    plan: free
 
   #######################################################
   # 2) Auth Service (Python)                            #
   #######################################################
-  - type: web                 # вместо web_service → web
+  - type: web
     name: auth-service
     dockerfilePath: ./auth_service/Dockerfile
     plan: free
     startCommand: python app.py
+
     env:
       REDIS_URL:            redis://redis-cache:6379/0
       AUTH_DATABASE_URI:    sqlite:///auth.db
       JWT_SECRET_KEY:       some_really_secure_key_32_chars
-    # -------------------------------
-    # При желании можно добавить dependsOn,
-    # чтобы Render запускал auth-service
-    # уже после Redis:
-    # dependsOn:
-    #   - redis-cache
+
+    # dependsOn здесь необязателен, т.к. Redis поднимается первым,
+    # но можно явно задать:
+    dependsOn:
+      - redis-cache
 
   #######################################################
   # 3) User Service (Python)                            #
   #######################################################
-  - type: web                 # вместо web_service → web
+  - type: web
     name: user-service
     dockerfilePath: ./user_service/Dockerfile
     plan: free
     startCommand: python app.py
+
     env:
       REDIS_URL:            redis://redis-cache:6379/0
       USER_DATABASE_URI:    sqlite:///user.db
+
     dependsOn:
-      - auth-service         # запускать после auth-service
-      - redis-cache          # и после Redis
+      - auth-service
+      - redis-cache
 
   #######################################################
   # 4) Certificate Service (Python)                     #
   #######################################################
-  - type: web                 # вместо web_service → web
+  - type: web
     name: certificate-service
     dockerfilePath: ./certificate_service/Dockerfile
     plan: free
     startCommand: python app.py
+
     env:
       REDIS_URL:            redis://redis-cache:6379/0
       CERT_DATABASE_URI:    sqlite:///certs.db
       JWT_SECRET_KEY:       some_really_secure_key_32_chars
+
     dependsOn:
       - auth-service
       - user-service
@@ -67,11 +67,13 @@ services:
   #######################################################
   # 5) Notification Worker (Celery + Python)            #
   #######################################################
-  - type: worker              # вместо background_worker → worker
+  - type: worker
     name: notification-worker
     dockerfilePath: ./notification_service/Dockerfile
-    startCommand: >           # вместо exec: используем startCommand:
+
+    startCommand: >
       sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
+
     env:
       SMTP_HOST:            smtp.gmail.com
       SMTP_PORT:            "587"
@@ -83,6 +85,7 @@ services:
       CELERY_BROKER_URL:    redis://redis-cache:6379/0
       CELERY_RESULT_BACKEND: redis://redis-cache:6379/0
       SMS_RU_API_KEY:       E4533D59-5983-8CAB-B496-279F04274AAF
+
     dependsOn:
       - certificate-service
       - user-service
@@ -91,11 +94,12 @@ services:
   #######################################################
   # 6) Frontend Service (Node.js / Static)              #
   #######################################################
-  - type: web                 # вместо web_service → web
+  - type: web
     name: frontend
     dockerfilePath: ./frontend/Dockerfile
     plan: free
     startCommand: npm start
+
     dependsOn:
       - auth-service
       - user-service
