@@ -1,7 +1,8 @@
 # render.yaml
 # ----------------------------------------------------------------------------
-# Этот файл описывает все сервисы вашего проекта в формате Blueprint от Render.com.
-# Он лежит в корне репозитория рядом с папками auth_service/, user_service/, etc.
+# Этот файл лежит в корне репозитория и описывает все сервисы вашего проекта
+# в формате Blueprint от Render.com. Расположите его рядом с папками:
+# auth_service/, user_service/, certificate_service/, notification_service/, frontend/.
 # ----------------------------------------------------------------------------
 
 services:
@@ -23,13 +24,12 @@ services:
     startCommand: python app.py
 
     env:
-      REDIS_URL:            redis://redis-cache:6379/0
-      AUTH_DATABASE_URI:    sqlite:///auth.db
-      JWT_SECRET_KEY:       some_really_secure_key_32_chars
-
-    # volumes (./auth_service/auth.db) не поддерживаются прямо в Blueprint,
-    # SQLite-файл будет храниться внутри контейнера. Для сохранения данных
-    # рекомендуем перейти на Managed PostgreSQL.
+      - key: REDIS_URL
+        value: redis://redis-cache:6379/0
+      - key: AUTH_DATABASE_URI
+        value: sqlite:///auth.db
+      - key: JWT_SECRET_KEY
+        value: some_really_secure_key_32_chars
 
     dependsOn:
       - redis-cache
@@ -44,11 +44,10 @@ services:
     startCommand: python app.py
 
     env:
-      REDIS_URL:            redis://redis-cache:6379/0
-      USER_DATABASE_URI:    sqlite:///user.db
-
-    # volumes (./user_service/user.db) не поддерживаются в Blueprint —
-    # SQLite-файл будет внутри контейнера.
+      - key: REDIS_URL
+        value: redis://redis-cache:6379/0
+      - key: USER_DATABASE_URI
+        value: sqlite:///user.db
 
     dependsOn:
       - redis-cache
@@ -64,12 +63,12 @@ services:
     startCommand: python app.py
 
     env:
-      REDIS_URL:            redis://redis-cache:6379/0
-      CERT_DATABASE_URI:    sqlite:///certs.db
-      JWT_SECRET_KEY:       some_really_secure_key_32_chars
-
-    # volumes (./certificate_service/certs.db) не поддерживаются в Blueprint —
-    # SQLite-файл будет внутри контейнера.
+      - key: REDIS_URL
+        value: redis://redis-cache:6379/0
+      - key: CERT_DATABASE_URI
+        value: sqlite:///certs.db
+      - key: JWT_SECRET_KEY
+        value: some_really_secure_key_32_chars
 
     dependsOn:
       - redis-cache
@@ -77,27 +76,36 @@ services:
       - user-service
 
   #######################################################
-  # 5) Notification Service (Celery + Flask)            #
+  # 5) Notification Worker (Celery + Python)            #
   #######################################################
   - type: worker
     name: notification-worker
     dockerfilePath: ./notification_service/Dockerfile
 
-    # запускаем одновременно Flask (python app.py) и Celery-воркер
     startCommand: >
       sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
 
     env:
-      SMTP_HOST:            smtp.gmail.com
-      SMTP_PORT:            "587"
-      SMTP_USER:            sypyx1@gmail.com
-      SMTP_PASS:            paad slgb prer aoac
-      CERT_SERVICE_URL:     http://certificate-service.onrender.com
-      USER_SERVICE_URL:     http://user-service.onrender.com
-      JWT_SECRET_KEY:       some_really_secure_key_32_chars
-      CELERY_BROKER_URL:    redis://redis-cache:6379/0
-      CELERY_RESULT_BACKEND: redis://redis-cache:6379/0
-      SMS_RU_API_KEY:       E4533D59-5983-8CAB-B496-279F04274AAF
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        value: sypyx1@gmail.com
+      - key: SMTP_PASS
+        value: paad slgb prer aoac
+      - key: CERT_SERVICE_URL
+        value: http://certificate-service.onrender.com
+      - key: USER_SERVICE_URL
+        value: http://user-service.onrender.com
+      - key: JWT_SECRET_KEY
+        value: some_really_secure_key_32_chars
+      - key: CELERY_BROKER_URL
+        value: redis://redis-cache:6379/0
+      - key: CELERY_RESULT_BACKEND
+        value: redis://redis-cache:6379/0
+      - key: SMS_RU_API_KEY
+        value: E4533D59-5983-8CAB-B496-279F04274AAF
 
     dependsOn:
       - redis-cache
@@ -112,10 +120,6 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     plan: free
     startCommand: npm start
-
-    # если фронтенду нужны переменные, можно добавить сюда env:
-    # env:
-    #   API_BASE_URL: http://auth-service.onrender.com
 
     dependsOn:
       - auth-service
