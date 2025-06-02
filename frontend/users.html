@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate Tracker – Пользователи</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 900px;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    button {
+      margin-right: 5px;
+    }
+    #add-user-form {
+      display: none;
+      margin-top: 15px;
+      border: 1px solid #ccc;
+      padding: 15px;
+      background: #f9f9f9;
+      max-width: 400px;
+    }
+    #search-input {
+      margin-bottom: 15px;
+      padding: 6px;
+      width: 300px;
+      font-size: 1rem;
+    }
+    /* Скрываем столбцы ID и Role */
+    .col-id, .col-role {
+      display: none;
+    }
+    /* Курсор «рука» для ссылок */
+    a {
+      cursor: pointer;
+      color: #0066cc;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Certificate Tracker – Пользователи</h1>
+    <button onclick="logout()" style="float: right; margin: 10px;">Выйти</button>
+  </header>
+
+  <main>
+    <section id="users-section">
+      <h2>Список пользователей</h2>
+
+      <!-- Поиск по ФИО -->
+      <input id="search-input" type="text" placeholder="Поиск по ФИО" oninput="filterUsers()" />
+
+      <!-- Кнопка добавления нового пользователя -->
+      <button id="show-add-btn" onclick="toggleAddForm()">Добавить пользователя</button>
+
+      <!-- Форма добавления нового пользователя (скрыта по умолчанию) -->
+      <div id="add-user-form">
+        <h3>Новый пользователь</h3>
+        <input id="new-username" type="text" placeholder="ФИО" /><br/><br/>
+        <input id="new-email" type="email" placeholder="Email" /><br/><br/>
+        <input id="new-password" type="password" placeholder="Password" /><br/><br/>
+        <!-- Новое поле для телефона -->
+        <input id="new-phone" type="text" placeholder="Телефон (например, 79161234567)" /><br/><br/>
+        <select id="new-role">
+          <option value="user">User</option>
+          <option value="manager">Manager</option>
+        </select><br/><br/>
+        <button onclick="submitNewUser()">Создать</button>
+        <button onclick="toggleAddForm()">Отмена</button>
+      </div>
+
+      <!-- Таблица пользователей -->
+      <table id="users-table">
+        <thead>
+          <tr>
+            <th class="col-id">ID</th>
+            <th>ФИО</th>
+            <th>Email</th>
+            <th>Телефон</th>
+            <th class="col-role">Role</th>
+            <th>Ближайший сертификат</th>
+            <th>Дней до конца</th>
+            <th>Уведомление</th>
+          </tr>
+        </thead>
+        <tbody id="users-body">
+          <!-- Строки заполняются через users.js -->
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script src="users.js"></script>
+</body>
+</html>

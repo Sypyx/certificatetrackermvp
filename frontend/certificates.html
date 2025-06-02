@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate Tracker – Сертификаты</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background: #f2f2f2;
+    }
+    #cert-form {
+      display: none;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-top: 20px;
+      width: 300px;
+      background: #f9f9f9;
+    }
+    button {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="page-title">Certificate Tracker – Сертификаты</h1>
+    <button onclick="goBack()" style="float: right; margin: 10px;">Назад</button>
+    <button onclick="logout()" style="float: right; margin: 10px;">Выйти</button>
+  </header>
+
+  <main>
+    <section id="cert-section">
+      <h2>Сертификаты</h2>
+
+      <div id="excel-tools" style="margin: 20px 0; display: none;">
+      <button id="export-btn">Экспорт в Excel</button>
+      <form id="import-form" enctype="multipart/form-data" style="display:inline-block; margin-left:20px;">
+        <input type="file" id="import-file-input" accept=".xlsx" />
+        <button type="submit">Импорт из Excel</button>
+      </form>
+    </div>
+
+      <!-- Таблица сертификатов -->
+      <table id="cert-table">
+        <thead>
+          <tr>
+            <th>№</th>
+            <th>Проверка</th>
+            <th>Начало действия</th>
+            <th>Конец действия</th>
+            <th>Дней до конца</th>
+            <th>Действия</th>
+            <th>Уведомление</th>
+          </tr>
+        </thead>
+        <tbody id="cert-body">
+          <!-- Сюда будут вставляться строки через JavaScript -->
+        </tbody>
+      </table>
+
+      <!-- Форма создания/редактирования сертификата (скрыта по умолчанию) -->
+      <div id="cert-form">
+        <h3 id="cert-form-title">Новый сертификат</h3>
+        <input id="cert-name" placeholder="Название проверки" /><br/>
+        <input id="cert-date-start" type="date" placeholder="Дата начала" /><br/>
+        <input id="cert-date-end" type="date" placeholder="Дата окончания" /><br/>
+        <button id="cert-submit" onclick="submitCert()">Сохранить</button>
+        <button onclick="cancelEdit()">Отмена</button>
+      </div>
+
+      <!-- Кнопка “Добавить сертификат” (видна только менеджеру) -->
+      <button id="new-cert-btn" style="display: none;" onclick="showCertForm()">Добавить сертификат</button>
+    </section>
+  </main>
+
+  <script src="cert.js"></script>
+</body>
+</html>

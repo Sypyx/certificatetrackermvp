@@ -1,0 +1,75 @@
+/* style.css */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+header {
+  background-color: #333;
+  color: #fff;
+  padding: 1rem;
+  text-align: center;
+}
+main {
+  padding: 1rem;
+}
+section {
+  background-color: #fff;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+input, select, button {
+  display: block;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  width: 100%;
+  max-width: 400px;
+}
+button {
+  width: auto;
+  cursor: pointer;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+}
+button:hover {
+  background-color: #0056b3;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 20px;
+}
+th, td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+th {
+  background: #f2f2f2;
+}
+#add-user-form {
+  display: none;
+  margin-top: 15px;
+  border: 1px solid #ccc;
+  padding: 15px;
+  background: #f9f9f9;
+  max-width: 400px;
+}
+/* Скрываем столбцы ID и Role */
+.col-id, .col-role {
+  display: none;
+}
+/* Курсор «рука» для ссылок */
+a {
+  cursor: pointer;
+  color: #0066cc;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,103 @@
+services:
+  redis:
+    image: redis:6.2-alpine
+    container_name: redis_broker
+    ports:
+      - "6379:6379"
+
+
+  auth_service:
+    build:
+      context: ./auth_service
+      dockerfile: Dockerfile
+    container_name: auth_service
+    ports:
+      - "5001:5001"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - AUTH_DATABASE_URI=sqlite:///auth.db
+      - JWT_SECRET_KEY=some_really_secure_key_32_chars
+    volumes:
+      - ./auth_service/auth.db:/app/auth.db
+    depends_on:
+      - redis
+
+
+  user_service:
+    build:
+      context: ./user_service
+      dockerfile: Dockerfile
+    container_name: user_service
+    ports:
+      - "5002:5002"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - USER_DATABASE_URI=sqlite:///user.db
+    volumes:
+      - ./user_service/user.db:/app/user.db
+    depends_on:
+      - redis
+      - auth_service
+
+
+  certificate_service:
+    build:
+      context: ./certificate_service
+      dockerfile: Dockerfile
+    container_name: certificate_service
+    ports:
+      - "5003:5003"
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+      - CERT_DATABASE_URI=sqlite:///certs.db
+      - JWT_SECRET_KEY=some_really_secure_key_32_chars
+    volumes:
+      - ./certificate_service/certs.db:/app/certs.db
+    depends_on:
+      - redis
+      - auth_service
+      - user_service
+
+
+  notification_service:
+    build:
+      context: ./notification_service
+      dockerfile: Dockerfile
+    container_name: notification_service
+    ports:
+      - "5004:5004"
+    environment:
+      - SMTP_HOST=smtp.gmail.com
+      - SMTP_PORT=587
+      - SMTP_USER=sypyx1@gmail.com
+      - SMTP_PASS=paad slgb prer aoac
+      - CERT_SERVICE_URL=http://certificate_service:5003
+      - USER_SERVICE_URL=http://user_service:5002
+      - JWT_SECRET_KEY=some_really_secure_key_32_chars
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - SMS_RU_API_KEY=E4533D59-5983-8CAB-B496-279F04274AAF
+    depends_on:
+      - redis
+      - certificate_service
+      - user_service
+    command: >
+      sh -c "python app.py &
+             celery -A celery_app.celery worker --loglevel=info"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth_service
+      - user_service
+      - certificate_service
+      - notification_service
+
+# (По умолчанию все сервисы будут подключены к одной сети 'bridge' —
+# дополнительная секция networks не обязательна,
+# если вам не нужно переопределять драйвер)
