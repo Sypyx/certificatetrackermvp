@@ -1,28 +1,14 @@
-# render.yaml
-# ----------------------------------------------------------------------------
-# Этот файл лежит в корне репозитория и описывает все сервисы вашего проекта
-# в формате Blueprint от Render.com. Расположите его рядом с папками:
-# auth_service/, user_service/, certificate_service/, notification_service/, frontend/.
-# ----------------------------------------------------------------------------
-
 services:
 
-  #######################################################
-  # 1) Redis (Managed KeyValue)                        #
-  #######################################################
   - type: redis
     name: redis-cache
     plan: free
 
-  #######################################################
-  # 2) Auth Service (Python)                            #
-  #######################################################
   - type: web
     name: auth-service
     dockerfilePath: ./auth_service/Dockerfile
     plan: free
     startCommand: python app.py
-
     env:
       - key: REDIS_URL
         value: redis://redis-cache:6379/0
@@ -30,38 +16,28 @@ services:
         value: sqlite:///auth.db
       - key: JWT_SECRET_KEY
         value: some_really_secure_key_32_chars
-
     dependsOn:
       - redis-cache
 
-  #######################################################
-  # 3) User Service (Python)                            #
-  #######################################################
   - type: web
     name: user-service
     dockerfilePath: ./user_service/Dockerfile
     plan: free
     startCommand: python app.py
-
     env:
       - key: REDIS_URL
         value: redis://redis-cache:6379/0
       - key: USER_DATABASE_URI
         value: sqlite:///user.db
-
     dependsOn:
       - redis-cache
       - auth-service
 
-  #######################################################
-  # 4) Certificate Service (Python)                     #
-  #######################################################
   - type: web
     name: certificate-service
     dockerfilePath: ./certificate_service/Dockerfile
     plan: free
     startCommand: python app.py
-
     env:
       - key: REDIS_URL
         value: redis://redis-cache:6379/0
@@ -69,22 +45,16 @@ services:
         value: sqlite:///certs.db
       - key: JWT_SECRET_KEY
         value: some_really_secure_key_32_chars
-
     dependsOn:
       - redis-cache
       - auth-service
       - user-service
 
-  #######################################################
-  # 5) Notification Worker (Celery + Python)            #
-  #######################################################
   - type: worker
     name: notification-worker
     dockerfilePath: ./notification_service/Dockerfile
-
     startCommand: >
       sh -c "python app.py & celery -A celery_app.celery worker --loglevel=info"
-
     env:
       - key: SMTP_HOST
         value: smtp.gmail.com
@@ -106,21 +76,16 @@ services:
         value: redis://redis-cache:6379/0
       - key: SMS_RU_API_KEY
         value: E4533D59-5983-8CAB-B496-279F04274AAF
-
     dependsOn:
       - redis-cache
       - certificate-service
       - user-service
 
-  #######################################################
-  # 6) Frontend Service (Node.js / Static)              #
-  #######################################################
   - type: web
     name: frontend
     dockerfilePath: ./frontend/Dockerfile
     plan: free
     startCommand: npm start
-
     dependsOn:
       - auth-service
       - user-service
